@@ -133,7 +133,7 @@ executeCommand command stack =
       x1:x2:xs -> Right ((x1 * x2) : xs)
       _        -> Left (InstructionError $ StackUnderflow {instruction = command, stackValue = Just (length stack)})
     ["DIV"] -> case stack of
-      x1:x2:xs -> if x1 == 0
+      x1:x2:xs -> if x2 == 0
                   then Left (InstructionError DivisionByZero)
                   else Right ((x2 `div` x1) : xs)
       _        -> Left (InstructionError $ StackUnderflow {instruction = command, stackValue = Just (length stack)})
@@ -141,4 +141,4 @@ executeCommand command stack =
 
 -- Main function to parse and run a list of commands
 parseAndRun :: String -> Either RunError [Int]
-parseAndRun = undefined
+parseAndRun = undefined 
