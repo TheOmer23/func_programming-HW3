@@ -25,10 +25,11 @@ serialize :: Tree Int -> [Int]
 serialize Empty = []
 serialize (Tree leftTree x rightTree) = [x] ++ serialize leftTree ++ serialize rightTree
 
--- deserialize :: [Int] -> Tree Int
--- deserialize [] = Empty
--- deserialize (x : xs) = Tree (deserialize left) x (deserialize right)
---   where
+deserialize :: [Int] -> Tree Int
+deserialize [] = Empty
+deserialize (x : xs) = Tree (deserialize left) x (deserialize right)
+  where
+    (left, right) = splitAt (length xs `div` 2) xs
 
 -- Section 2: Infinite lists
 data InfiniteList a = a :> InfiniteList a
