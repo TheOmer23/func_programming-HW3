@@ -17,22 +17,18 @@ import Data.Maybe (catMaybes, fromMaybe, isJust, isNothing, listToMaybe, mapMayb
 import Data.Ratio (denominator, numerator, (%))
 import Text.Read (readMaybe)
 
+
+
 -- Section 1: Tree Serialization
 data Tree a = Empty | Tree (Tree a) a (Tree a) deriving (Show, Eq)
 serialize :: Tree Int -> [Int]
 serialize Empty = []
-serialize (Tree l x r) = [x] ++ serialize l ++ serialize r
-deserialize :: [Int] -> Tree Int
-deserialize [] = Empty
-deserialize xs = let (tree, _) = buildTree xs in tree
-  where
-    buildTree :: [Int] -> (Tree Int, [Int])
-    buildTree [] = (Empty, [])
-    buildTree (y : ys) =
-      let (leftTree, rest1) = buildTree ys
-          (rightTree, rest2) = buildTree rest1
-      in (Tree leftTree y rightTree, rest2)
+serialize (Tree leftTree x rightTree) = [x] ++ serialize leftTree ++ serialize rightTree
 
+-- deserialize :: [Int] -> Tree Int
+-- deserialize [] = Empty
+-- deserialize (x : xs) = Tree (deserialize left) x (deserialize right)
+--   where
 
 -- Section 2: Infinite lists
 data InfiniteList a = a :> InfiniteList a
@@ -88,7 +84,6 @@ interleave (x :> xs) ys = x :> interleave ys xs
 
 integers :: InfiniteList Integer
 integers = interleave naturals negatives
--- integers = iconcat (negatives :> (naturals :> []))
 
 rationals :: InfiniteList Rational
 rationals = undefined
@@ -103,7 +98,6 @@ data RunError = InstructionError StackError | ParseError {line :: String} derivi
 
 type Stack = [Int]
 
--- Helper function to safely read an integer
 safeReadInt :: String -> Maybe Int
 safeReadInt s = readMaybe s
 
@@ -133,12 +127,16 @@ executeCommand command stack =
       x1:x2:xs -> Right ((x1 * x2) : xs)
       _        -> Left (InstructionError $ StackUnderflow {instruction = command, stackValue = Just (length stack)})
     ["DIV"] -> case stack of
-      x1:x2:xs -> if x2 == 0
-                  then Left (InstructionError DivisionByZero)
-                  else Right ((x2 `div` x1) : xs)
-      _        -> Left (InstructionError $ StackUnderflow {instruction = command, stackValue = Just (length stack)})
+            x2:x1:xs -> if x1 == 0
+                        then Left (InstructionError DivisionByZero)
+                        else Right ((x2 `div` x1) : xs)
+            _        -> Left (InstructionError $ StackUnderflow {instruction = "DIV", stackValue = Just (length stack)})
     _ -> Left (ParseError command)
 
--- Main function to parse and run a list of commands
-parseAndRun :: String -> Either RunError [Int]
-parseAndRun = undefined 
+parseAndRun :: String -> Either RunError Stack
+parseAndRun input = foldl' executeStep (Right []) (lines input)
+  where
+    executeStep :: Either RunError Stack -> String -> Either RunError Stack
+    executeStep acc line = case acc of
+      Left err -> Left err 
+      Right stack -> executeCommand line stack
